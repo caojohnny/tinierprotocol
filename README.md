@@ -105,6 +105,34 @@ of reasons, but if you were genuinely curious
 hacking here and there, you can indeed avoid the
 *dreaded* external dependency...
 
+# Demo
+
+Some demo code can be found under the `test-plugin`
+directory.
+
+Here is how `tinierprotocol` can be used in your plugin
+once you have copied it into your project:
+
+``` java
+public class PluginMain extends JavaPlugin {
+    private final TinierProtocol protocol = new TinierProtocol(this);
+
+    @Override
+    public void onEnable() {
+        protocol.setInHandler((cc, packet) -> {
+            // Handle serverbound packet
+            return packet;
+        });
+        protocol.setOutHandler((cc, packet) -> {
+            // Handle clientbound packet
+            return packet;
+        });
+
+        protocol.begin();
+    }
+}
+```
+
 # Build The Test Jar
 
 This is NOT intended to be a plugin! This doesn't do
