@@ -1,0 +1,16 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+shadowJar {
+    archiveName 'TinierProtocolTest.jar'
+}
+
+processResources {
+    expand project.properties
+}
+
+dependencies {
+    shadow 'org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT'
+    implementation project(':tinierprotocol')
+}
