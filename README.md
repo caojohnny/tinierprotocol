@@ -59,13 +59,17 @@ attempted to figure it out on my own, but I ended up
 giving up because I honestly couldn't figure out why the
 channel behaves the way it does and followed the same
 technique as `TinyProtocol`. The process goes like this:
-1) a `ChannelHandler` is added to the end of the new
-channel's pipeline 2) the tail `ChannelHandler` schedules
-a task 3) the task adds the `ChannelHandlers` actually
-listening to traffic to the `Channel`. My guess is that
-the task is needed to ensure that the other
-`ChannelHandler`s are added (since you don't want to be
-decoding the packet bytes yourself, you want to
+
+  1) a `ChannelHandler` is added to the end of the new
+  channel's pipeline 
+  2) the tail `ChannelHandler` schedules
+  a task 
+  3) the task adds the `ChannelHandlers` actually
+  listening to traffic to the `Channel`.
+   
+My guess is that the task is needed to ensure that the 
+other `ChannelHandler`s are added (since you don't want to
+be decoding the packet bytes yourself, you want to
 piggyback off of the server), but I'm not really sure
 about the need to have a separate `ChannelHandler` do that
 (step 2) rather than the the `ChannelHandler` doing the
