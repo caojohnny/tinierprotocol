@@ -140,6 +140,6 @@ cd tinierprotocol
 
 # Credits
 
-Built with [IntelliJ IDEA]()
+Built with [IntelliJ IDEA](https://www.jetbrains.com/idea/)
 
 Inspired by [TinyProtocol](https://github.com/aadnk/ProtocolLib/blob/master/modules/TinyProtocol/src/main/java/com/comphenix/tinyprotocol/TinyProtocol.java)
