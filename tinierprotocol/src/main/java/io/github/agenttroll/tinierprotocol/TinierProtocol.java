@@ -7,12 +7,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,6 +110,8 @@ public class TinierProtocol {
 
     // netty.Channel
     private static final Class<?> CH_CLS = lookupClass(NETTY_PACKAGE + "Channel");
+    // SocketAddress Channel#remoteAddress()
+    private static final Method CH_REMOTE_ADDR_ME = lookupMethod(CH_CLS, "remoteAddress");
     // ChannelPipeline Channel#pipeline()
     private static final Method CH_PIPELINE_ME = lookupMethod(CH_CLS, "pipeline");
 
@@ -165,6 +170,9 @@ public class TinierProtocol {
     // A uniquifier number used for multiple instances in a single plugin
     private static final AtomicInteger UNIQUE_COUNTER = new AtomicInteger();
 
+    // Cache for InetAddress-Channel used to find a player when they login
+    private final Map<InetAddress, Object> addressMap =
+            new MapMaker().weakValues().makeMap();
     // Caches for Channel-ClientConnection lookups from the interceptors
     private final Map<Object, ClientConnection> connectionMap =
             new MapMaker().weakKeys().makeMap();
@@ -196,7 +204,7 @@ public class TinierProtocol {
      * Creates a new instance of {@code TinierProtocol} for
      * use by the given plugin.
      *
-     * @plugin the plugin for which to create the instance
+     * @param plugin the plugin for which to create the instance
      */
     public TinierProtocol(Plugin plugin) {
         this.plugin = plugin;
@@ -421,7 +429,27 @@ public class TinierProtocol {
                 // event we can grab the Player object from
                 // PlayerList#attemptLogin(...)
                 // Pre-cache the player in the client connection
-                getClientConnection(player);
+                InetAddress addr = event.getAddress();
+                Object ch = addressMap.remove(addr);
+                if (ch != null) {
+                    playerMap.put(player.getUniqueId(), ch);
+
+                    ClientConnection cc = new ClientConnection(ch);
+                    cc.setPlayer(player);
+                    connectionMap.put(ch, cc);
+                }
+            }
+
+            @EventHandler
+            public void onJoin(PlayerJoinEvent event) {
+                Player player = event.getPlayer();
+
+                // For some unknown reason, the player
+                // connection isn't initialized with the
+                // player so we are forced to initialize
+                // it here...
+                Object nmsPCon = ClientConnection.getNmsPCon(player);
+                getClientConnection(player).setPlayerConnection(nmsPCon);
             }
 
             @EventHandler
@@ -525,6 +553,10 @@ public class TinierProtocol {
                     if (methodName.equals(CIH_CH_READ_ME_NAME)) {
                         Object ctx = args[0];
                         Object channel = args[1];
+
+                        // Cache for later lookup to find the player object
+                        InetSocketAddress addr = invokeMethod(CH_REMOTE_ADDR_ME, channel);
+                        this.addressMap.put(addr.getAddress(), channel);
 
                         // Inject the new channel
                         this.hijackChannel(channel);
@@ -695,9 +727,11 @@ public class TinierProtocol {
         // Map from the channel object to the connection wrapper
         return this.connectionMap.computeIfAbsent(ch, k -> {
             ClientConnection con = new ClientConnection(ch);
+            con.setPlayer(player);
 
             Object nmsPCon = ClientConnection.getNmsPCon(player);
-            con.setPlayer(player, nmsPCon);
+            con.setPlayerConnection(nmsPCon);
+
             return con;
         });
     }
@@ -843,17 +877,25 @@ public class TinierProtocol {
          * @param player the player that joined the game,
          * may be {@code null} to clear the player from the
          * connection wrapper
-         * @param nmsPCon the player's NMS PlayerConnection
-         * object
          */
-        private void setPlayer(Player player, Object nmsPCon) {
+        private void setPlayer(Player player) {
             if (player == null) {
                 this.uuid = null;
-                this.nmsPCon = null;
                 return;
             }
 
             this.uuid = player.getUniqueId();
+        }
+
+        /**
+         * Notifies this wrapper that the NMS
+         * PlayerConnection has been initialized for this
+         * player has been initialized.
+         *
+         * @param nmsPCon the player connection to set for
+         * the player
+         */
+        private void setPlayerConnection(Object nmsPCon) {
             this.nmsPCon = nmsPCon;
         }
 

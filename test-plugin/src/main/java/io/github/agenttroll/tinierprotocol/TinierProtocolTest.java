@@ -7,16 +7,16 @@ public class TinierProtocolTest extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        protocol.setInHandler((clientConnection, o) -> {
+        this.protocol.setInHandler((clientConnection, o) -> {
             // System.out.println("IN: " + o.getClass().getSimpleName());
             return o;
         });
-        protocol.setOutHandler((clientConnection, o) -> {
+        this.protocol.setOutHandler((clientConnection, o) -> {
             // System.out.println("OUT: " + o.getClass().getSimpleName());
             return o;
         });
 
-        protocol.begin();
+        this.protocol.begin();
     }
 
     @Override
