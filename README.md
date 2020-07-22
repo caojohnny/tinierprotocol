@@ -77,6 +77,44 @@ initialization (the caller of step 1). It seems that Netty
 doesn't even activate the channel without steps 1 and 2 for
 some reason. Someone will need to explain that to me.
 
+Later edit: actually, it seems that this is necessary just
+due to the way that the channel initialization is done. The
+following steps occur when a new connection is opened:
+
+  1. `tinierprotocol`'s "channel initializer" adds its
+  `playerConnectionInitProxy` to the pipeline. This
+  schedules a task on the event loop that calls
+  `handlerAdded()` later.
+  2. Minecraft's server channel uses a 
+  `ServerBootstrapAcceptor`, which schedules a task on the
+  event loop to add the child handler to the new channel 
+  (and does **not** fire any subsequent `ChannelHandler`s)
+  3. The task scheduled in step 1 runs; `tinierprotocol`
+  runs its `handlerAdded()`, which adds another task to the
+  end of the event loop.
+  4. The task scheduled in step 2 runs; the server child
+  handler runs its `handlerAdded()` method and adds all
+  the necessary network handlers.
+  5. The task scheduled in step 3 runs, which adds the
+  interceptors with respect to the default Minecraft
+  handlers.
+  
+This means a few things:
+
+  1. `tinierprotocol` must register the channel initializer
+  as the first `ChannelHandler` since 
+  `ServerBootstrapAcceptor` does not call any subsequent
+  handlers
+  2. The position of the `playerConnectionInitProxy` is
+  fixed to the head of the pipeline as a result of #1 since
+  the Minecraft channel initializer must schedule adding
+  the child handler on the event loop
+  3. `playerConnectionInitProxy` must run its
+  `handlerAdded()` prior to the Minecraft child handler due
+  to #2, so the only way to insert the interceptors in the
+  correct position in the pipeline is to schedule another
+  task so that it runs after the `handlerAdded()`
+
 Another major issue with proxies is that you cannot
 implement classes, even abstract classes. They must be
 interfaces, meaning that every method needs to run the

@@ -404,14 +404,14 @@ public class TinierProtocol {
                 Object addFirstArgs = Array.newInstance(CH_HANDLER_CLS, 1);
                 Array.set(addFirstArgs, 0, this.serverConnectionInitProxy);
 
-                // addLast the new connection initializer
+                // addFirst the new connection initializer
                 invokeMethod(CP_ADD_FIRST_ME, pipelineInst, addFirstArgs);
             }
         }
     }
 
     /**
-     * Creates the Bukkit listener which spplients the
+     * Creates the Bukkit listener which supplements the
      * packet listeners.
      *
      * <p>This listener will clear any cache entries
