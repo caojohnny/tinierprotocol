@@ -18,18 +18,18 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * TinierProtocol - Bukkit-ONLY re-work of TinyProtocol,
  * originally authored by Comphenix.
+ *
+ * <p>All public methods present in this class are thread-
+ * safe.</p>
  *
  * <p>This class is not meant to be a drop-in replacement,
  * but it was heavily inspired by TinyProtocol
@@ -505,13 +505,8 @@ public class TinierProtocol {
             // proxied just for simplicity
             case "isSharable":
                 return false;
-            // The default error handler sucks, log
-            // using the owner plugin's logger
+            // Edge case for ChannelHandlerContext rather than the mapped class
             case "exceptionCaught":
-                Logger logger = this.plugin.getLogger();
-                logger.log(Level.SEVERE,
-                        "Exception occurred running " + mappedCls.getSimpleName() + "#" + methodName + "()",
-                        (Throwable) args[1]);
                 invokeMethod(CHC_FIRE_EX_CAUGHT_ME, args[0], args[1]);
                 break;
             // Otherwise, it's one of the
@@ -913,7 +908,7 @@ public class TinierProtocol {
         public Player getPlayer() {
             UUID uuid = this.uuid;
             if (uuid == null) {
-                throw new IllegalStateException("No player");
+                return null;
             }
 
             return Bukkit.getPlayer(uuid);
@@ -935,7 +930,7 @@ public class TinierProtocol {
 
         @Override
         public int hashCode() {
-            return Objects.hash(channelInst);
+            return this.channelInst.hashCode();
         }
     }
 
