@@ -1,4 +1,4 @@
-main: io.github.agenttroll.tinierprotocol.TinierProtocolTest
+main: io.github.caojohnny.tinierprotocol.TinierProtocolTest
 name: TinierProtocolTest
 version: ${project.version}
 api-version: "1.15"

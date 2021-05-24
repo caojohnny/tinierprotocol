@@ -1,4 +1,4 @@
-package io.github.agenttroll.tinierprotocol;
+package io.github.caojohnny.tinierprotocol;
 
 import org.bukkit.plugin.java.JavaPlugin;
 

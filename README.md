@@ -180,7 +180,7 @@ purpose of this section is mostly to remind myself to use
 `shadowJar` rather than `jar`.
 
 ``` shell
-git clone https://github.com/AgentTroll/tinierprotocol.git
+git clone https://github.com/caojohnny/tinierprotocol.git
 cd tinierprotocol
 ./gradlew clean shadowJar
 ```

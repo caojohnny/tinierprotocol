@@ -1,4 +1,4 @@
-package io.github.agenttroll.tinierprotocol;
+package io.github.caojohnny.tinierprotocol;
 
 import com.google.common.collect.MapMaker;
 import org.bukkit.Bukkit;
